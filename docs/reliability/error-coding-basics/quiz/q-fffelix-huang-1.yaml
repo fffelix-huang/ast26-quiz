@@ -1,0 +1,20 @@
+author: fffelix-huang
+date: 2026-05-27
+question: |
+  某 HDD 韌體工程師要為每個 sector 選一種 checksum。該 sector 的典型故障是磁頭刮過磁軌，造成**一段連續的 bit** 同時翻掉（burst error）。他在「CRC-32」與「一個用 random-error model 設計、同樣 32 個 parity bit 的 code」之間選擇。
+
+  為什麼 CRC-32 是更合適的 detection 選擇？
+options:
+  - text: "CRC-32 在設計上保證能偵測到任何長度 ≤ 32 bit 的單一 burst，剛好對應磁頭刮傷這種連續損毀；相同 redundancy 但以 random-error 為前提的 code 對相鄰多 bit 翻並沒有這個保證。"
+    correct: true
+    explanation: |
+      CRC 的多項式除法結構讓它對「連續區段的 bit 翻」有確定性保證：標準 CRC-32 能抓到所有長度 ≤ 32 bit 的 burst error。這正好貼合磁頭刮傷的物理故障模式。針對隨機散落 bit error 最佳化的 code，即使 parity bit 數相同，對連續多 bit 同時翻也給不出同樣的保證。
+  - text: "CRC-32 不只能偵測還能更正這段 burst，直接把 sector 修回正確內容，省去從其他來源重讀。"
+    explanation: |
+      CRC 是 detection-only：它只告訴你資料壞了，無法指出壞在哪、也無法修回。偵測到錯誤後的修復（重讀、上層 RAID／EC）是另一層的工作。誤以為 CRC 能更正是常見的混淆。
+  - text: "任何用了 32 個 parity bit 的 code 都能抓到同樣的 burst，CRC-32 只是因為計算成本低才被選；burst 偵測能力與選哪種 code 無關。"
+    explanation: |
+      計算便宜確實是 CRC 的優點，但不是它能涵蓋 burst 的原因。burst 保證來自 CRC 特定的代數結構，而非「有 32 個 parity bit」這件事本身；同樣 redundancy 的 random-error code 並不繼承這個性質。
+  - text: "CRC-32 的 32 個 parity bit 能精準定位 sector 內任意 32 個獨立隨機翻轉的 bit，因此連帶能涵蓋 burst。"
+    explanation: |
+      這把 burst（連續區段）和「任意 32 個散落的隨機 error」混為一談。CRC 的強項是連續 burst 的偵測保證，並不保證能抓到散布全 sector 的 32 個獨立隨機 error，更談不上「定位」。
